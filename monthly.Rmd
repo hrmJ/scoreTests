@@ -1,0 +1,26 @@
+## Kuukausittain
+
+```{r, include=F}
+tidyvals <- readRDS("./tidyvals.RDS")
+library(tidyverse)
+library(ggplot2)
+```
+
+
+
+
+```{r,}
+monthlyPlotData <- tidyvals %>%
+  mutate(success = case_when(
+    forebet == "1" & homeGoals > awayGoals ~ "H",
+    forebet == "X" & homeGoals == awayGoals ~ "X",
+    forebet == "2" & homeGoals < awayGoals ~ "A",
+    TRUE ~ "FAIL"
+  )) %>%
+  mutate(success = as.factor(success)) %>%
+  mutate(month = as.factor(format(parsedTime, format = "%m")))
+
+ggplot(monthlyPlotData, aes(x = month)) +
+  geom_bar(aes(fill = success))
+```
+
