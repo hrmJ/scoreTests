@@ -10,7 +10,8 @@ library(ggplot2)
 
 
 ```{r,}
-monthlyPlotData <- tidyvals %>%
+monthlyPlotData <-
+  tidyvals %>%
   mutate(success = case_when(
     forebet == "1" & homeGoals > awayGoals ~ "H",
     forebet == "X" & homeGoals == awayGoals ~ "X",
@@ -20,7 +21,14 @@ monthlyPlotData <- tidyvals %>%
   mutate(success = as.factor(success)) %>%
   mutate(month = as.factor(format(parsedTime, format = "%m")))
 
-ggplot(monthlyPlotData, aes(x = month)) +
-  geom_bar(aes(fill = success))
+monthlyPlotData %>%
+  count(country, month, success) %>%
+  group_by(country, month) %>%
+  mutate(freq = n / sum(n) * 100) %>%
+  print(n = 29) %>%
+  ggplot(., aes(x = country, y = freq)) +
+  geom_bar(stat = "identity", aes(fill = success)) +
+  facet_grid(~month) +
+  coord_flip()
 ```
 
