@@ -20,3 +20,15 @@ getGoals  <- function(val, asString = FALSE){
   }
   )
 }
+
+
+getFirstNForDay <- function(data, n){
+  data  %>% 
+    mutate(day = format(parsedTime, "%d")) %>% 
+    group_by(day) %>%
+    arrange(parsedTime) %>% 
+    filter(row_number() <= n) %>% 
+    select(Date, day, parsedTime) %>%
+    return
+}
+
