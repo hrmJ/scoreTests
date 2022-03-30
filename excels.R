@@ -21,3 +21,7 @@ excelData <- list.files(path = fullPath, pattern = "*.xlsx") %>%
   mutate(HTparsedResult = sapply(`1st Half Score`, getGoals, asString = TRUE)) %>%
   mutate(HThomeGoals = as.numeric(gsub("^(\\d+).*", "\\1", HTparsedResult))) %>%
   mutate(HTawayGoals = as.numeric(gsub(".*-(\\d+)$", "\\1", HTparsedResult)))
+
+
+
+# getFirstNForDay(excelData, 1)
