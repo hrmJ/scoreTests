@@ -1,93 +1,33 @@
 
-### Kronologisesti
+### Kronologisesti / putkia
 
-Asenna puuttuvat paketit:
+Asenna mahdollisesti puuttuvat paketit:
 
 ```{r, include=F}
-
 install.packages("pbapply")
+install.packages("plotly")
 ```
 
-Valmistellaan dataa...
+### Datan muokkaaminen
 
 
-```{r, include=F}
-tidyvals <- readRDS("./tidyvals.RDS")
-library(tidyverse)
+```{r}
+source("./leagueRows.R")
+streakDataFlat_algeria <- getStreakData(tidyvals, "2021-11-05 00:00", F, c("Algeria Division 1", "Algeria Division 2"))
+
+streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00", F)
+
+```
+
+
+### Visualisointeja
+
+```{r}
 library(ggplot2)
-
-tempData <- tidyvals %>%
-  mutate(success = case_when(
-    forebet == "1" & homeGoals > awayGoals ~ "H",
-    forebet == "X" & homeGoals == awayGoals ~ "X",
-    forebet == "2" & homeGoals < awayGoals ~ "A",
-    TRUE ~ "FAIL"
-  )) %>%
-  mutate(success = as.factor(success))
-
-leagues <- tidyvals %>%
-  distinct(countryAndLeague) %>%
-  pull(countryAndLeague)
-```
-
-Lasketaan...
-
-
-```{r, include=F}
-
-library(pbapply)
-
-earliest <- parse_datetime("2021-11-01 00:00")
-inTimeFrame <- tempData %>% filter(parsedTime > earliest)
-
-getStreak <- function(allMatches, index, prevRow, streakLength) {
-  if(is.null(prevRow)){
-    prevRes <- NULL
-  }
-  else{
-    prevRes <- as.character(prevRow$success)
-  }
-  if (index < 1) {
-    thisRow <- allMatches[1, ]
-    return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = thisRow$parsedTime))
-  }
-  thisRow <- allMatches[index, ]
-  currentRes <- as.character(thisRow$success)
-  sameResult <- FALSE
-  noPrevResult <- is.null(prevRes)
-  if (!noPrevResult) {
-    sameResult <- currentRes == prevRes
-  }
-  if (noPrevResult | sameResult) {
-    return(getStreak(allMatches, index - 1, thisRow, streakLength + 1))
-  }
-  return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = prevRow$parsedTime))
-}
-
-getAllStreaks <- function(allMatches, index, leagueName, allStreaks = tibble(streakLength = NA, streakType = "",  parsedTime = NA, league = "")) {
-  matchesLeft <- head(allMatches, index)
-  if (index > 0 & nrow(matchesLeft) > 0) {
-    streak <- getStreak(matchesLeft, nrow(matchesLeft), NULL, 0)
-    return(getAllStreaks(matchesLeft, streak$index, leagueName, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, parsedTime = streak$parsedTime, league = leagueName)))
-  }
-  return(allStreaks[-1,])
-}
-
-
-
-streakResults <- pblapply(leagues, function(l) {
-  allMatches <- inTimeFrame %>%
-    filter(countryAndLeague == l) %>%
-    arrange(desc(parsedTime))
-  if (nrow(allMatches) == 0) {
-    return(NULL)
-  }
-  allStreaks <- getAllStreaks(allMatches, nrow(allMatches), l)
-  return(allStreaks)
-})
-
-streakResultsFlat <- streakResults %>% bind_rows
-
+library(plotly)
+library(htmlwidgets)
+p <- streakDataFlat_algeria %>% ggplot(aes(x=parsedTime, y=streakType))  + geom_point(aes(size=streakLength, color=league), position=position_jitter()) 
+ggplotly(p)
 
 ```
 
