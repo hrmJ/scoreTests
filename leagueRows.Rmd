@@ -1,0 +1,58 @@
+
+### Kronologisesti
+
+
+```{r, include=F}
+tidyvals <- readRDS("./tidyvals.RDS")
+library(tidyverse)
+library(ggplot2)
+
+tempData <- tidyvals %>%
+  mutate(success = case_when(
+    forebet == "1" & homeGoals > awayGoals ~ "H",
+    forebet == "X" & homeGoals == awayGoals ~ "X",
+    forebet == "2" & homeGoals < awayGoals ~ "A",
+    TRUE ~ "FAIL"
+  )) %>%
+  mutate(success = as.factor(success)) 
+
+leagues <- tidyvals %>%
+  distinct(countryAndLeague) %>%
+  pull(countryAndLeague) 
+
+parsed <- list()
+
+earliest <- parse_datetime("2021-11-01 00:00")
+inTimeFrame <- tempData %>% filter(parsedTime > earliest) 
+
+getStreak <- function(allMatches, index, prevRes, streakLength){
+  if(index < 1){
+    return(streakLength)
+  }
+  thisRow <- allMatches[index, ]
+  currentRes <- thisRow$success
+  sameResult <- FALSE
+  noPrevResult <- is.null(prevRes)
+  if(!noPrevResult){
+    sameResult <- currentRes == prevRes
+  }
+  if(noPrevResult | sameResult ){
+    show("SAME!")
+    show(streakLength)
+    return(getStreak(allMatches, index -1 , currentRes, streakLength + 1))
+  }
+  show("NOT SAME!")
+  return(streakLength)
+}
+for (l in leagues) {
+  allMatches <- inTimeFrame %>%
+    filter(countryAndLeague == l) %>%
+    arrange(desc(parsedTime)) 
+  if(nrow(allMatches) == 0) {
+    next
+  }
+  streak <- getStreak(allMatches, nrow(allMatches), NULL, 0)
+}
+
+```
+
