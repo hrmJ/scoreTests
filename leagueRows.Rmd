@@ -1,6 +1,13 @@
 
 ### Kronologisesti
 
+Asenna puuttuvat paketit:
+
+```{r, include=F}
+
+install.packages("pbapply")
+```
+
 Valmistellaan dataa...
 
 
@@ -16,12 +23,11 @@ tempData <- tidyvals %>%
     forebet == "2" & homeGoals < awayGoals ~ "A",
     TRUE ~ "FAIL"
   )) %>%
-  mutate(success = as.factor(success)) 
+  mutate(success = as.factor(success))
 
 leagues <- tidyvals %>%
   distinct(countryAndLeague) %>%
-  pull(countryAndLeague) 
-
+  pull(countryAndLeague)
 ```
 
 Lasketaan...
@@ -29,38 +35,47 @@ Lasketaan...
 
 ```{r, include=F}
 
+library(pbapply)
 
 earliest <- parse_datetime("2021-11-01 00:00")
-inTimeFrame <- tempData %>% filter(parsedTime > earliest) 
+inTimeFrame <- tempData %>% filter(parsedTime > earliest)
 
-getStreak <- function(allMatches, index, prevRes, streakLength){
-  if(index < 1){
-    return(streakLength)
+getStreak <- function(allMatches, index, prevRes, streakLength) {
+  if (index < 1) {
+    return(list(streakLength = streakLength, streakType = prevRes, index = index))
   }
   thisRow <- allMatches[index, ]
-  currentRes <- thisRow$success
+  currentRes <- as.character(thisRow$success)
   sameResult <- FALSE
   noPrevResult <- is.null(prevRes)
-  if(!noPrevResult){
+  if (!noPrevResult) {
     sameResult <- currentRes == prevRes
   }
-  if(noPrevResult | sameResult ){
-    return(getStreak(allMatches, index -1 , currentRes, streakLength + 1))
+  if (noPrevResult | sameResult) {
+    return(getStreak(allMatches, index - 1, currentRes, streakLength + 1))
   }
-  return(streakLength)
+  return(list(streakLength = streakLength, streakType = prevRes, index = index))
 }
 
-parsed <- lapply(leagues, function(l){
+getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = NA, streakType = "", index = NA)) {
+  matchesLeft <- head(allMatches, index)
+  if (index > 0 & nrow(matchesLeft) > 0) {
+    streak <- getStreak(matchesLeft, nrow(matchesLeft), NULL, 0)
+    return(getAllStreaks(matchesLeft, streak$index, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, index = index)))
+  }
+  return(allStreaks)
+}
+
+
+pblapply(leagues[5], function(l) {
   allMatches <- inTimeFrame %>%
     filter(countryAndLeague == l) %>%
-    arrange(desc(parsedTime)) 
-  if(nrow(allMatches) == 0) {
-    return (NULL)
+    arrange(desc(parsedTime))
+  if (nrow(allMatches) == 0) {
+    return(NULL)
   }
-  streak <- getStreak(allMatches, nrow(allMatches), NULL, 0)
-return(list(allmatches = allMatches, leagueName = l, streakLength = streak))
+  allStreaks <- getAllStreaks(allMatches, nrow(allMatches))
+  return(list(allMatches = allMatches %>% select(success), leagueName = l, streaks = allStreaks))
 })
-
-
 ```
 
