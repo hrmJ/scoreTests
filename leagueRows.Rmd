@@ -64,27 +64,30 @@ getStreak <- function(allMatches, index, prevRow, streakLength) {
   return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = prevRow$parsedTime))
 }
 
-getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = NA, streakType = "",  parsedTime = NA)) {
+getAllStreaks <- function(allMatches, index, leagueName, allStreaks = tibble(streakLength = NA, streakType = "",  parsedTime = NA, league = "")) {
   matchesLeft <- head(allMatches, index)
   if (index > 0 & nrow(matchesLeft) > 0) {
     streak <- getStreak(matchesLeft, nrow(matchesLeft), NULL, 0)
-    return(getAllStreaks(matchesLeft, streak$index, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, parsedTime = streak$parsedTime)))
+    return(getAllStreaks(matchesLeft, streak$index, leagueName, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, parsedTime = streak$parsedTime, league = leagueName)))
   }
   return(allStreaks[-1,])
 }
 
 
 
-streakResults <- 
- setNames(pblapply(leagues, function(l) {
+streakResults <- pblapply(leagues, function(l) {
   allMatches <- inTimeFrame %>%
     filter(countryAndLeague == l) %>%
     arrange(desc(parsedTime))
   if (nrow(allMatches) == 0) {
     return(NULL)
   }
-  allStreaks <- getAllStreaks(allMatches, nrow(allMatches))
+  allStreaks <- getAllStreaks(allMatches, nrow(allMatches), l)
   return(allStreaks)
-}), leagues)
+})
+
+streakResultsFlat <- streakResults %>% bind_rows
+
+
 ```
 
