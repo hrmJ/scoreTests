@@ -42,7 +42,7 @@ inTimeFrame <- tempData %>% filter(parsedTime > earliest)
 
 getStreak <- function(allMatches, index, prevRes, streakLength) {
   if (index < 1) {
-    return(list(streakLength = streakLength, streakType = prevRes, index = index))
+    return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = NA))
   }
   thisRow <- allMatches[index, ]
   currentRes <- as.character(thisRow$success)
@@ -54,20 +54,21 @@ getStreak <- function(allMatches, index, prevRes, streakLength) {
   if (noPrevResult | sameResult) {
     return(getStreak(allMatches, index - 1, currentRes, streakLength + 1))
   }
-  return(list(streakLength = streakLength, streakType = prevRes, index = index))
+  return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = thisRow$parsedTime))
 }
 
-getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = NA, streakType = "", index = NA)) {
+getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = NA, streakType = "",  parsedTime = NA)) {
   matchesLeft <- head(allMatches, index)
   if (index > 0 & nrow(matchesLeft) > 0) {
     streak <- getStreak(matchesLeft, nrow(matchesLeft), NULL, 0)
-    return(getAllStreaks(matchesLeft, streak$index, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, index = index)))
+    return(getAllStreaks(matchesLeft, streak$index, allStreaks %>% add_row(streakLength = streak$streakLength, streakType = streak$streakType, parsedTime = streak$parsedTime)))
   }
-  return(allStreaks)
+  return(allStreaks[-1,])
 }
 
 
-pblapply(leagues[5], function(l) {
+streakResults <- 
+ setNames(pblapply(leagues, function(l) {
   allMatches <- inTimeFrame %>%
     filter(countryAndLeague == l) %>%
     arrange(desc(parsedTime))
@@ -76,6 +77,6 @@ pblapply(leagues[5], function(l) {
   }
   allStreaks <- getAllStreaks(allMatches, nrow(allMatches))
   return(list(allMatches = allMatches %>% select(success), leagueName = l, streaks = allStreaks))
-})
+}), leagues)
 ```
 
