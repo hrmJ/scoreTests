@@ -13,9 +13,9 @@ install.packages("plotly")
 
 ```{r}
 source("./leagueRows.R")
-streakDataFlat_algeria <- getStreakData(tidyvals, "2021-11-05 00:00", F, c("Algeria Division 1", "Algeria Division 2"))
+streakDataFlat_algeria <- getStreakData(tidyvals, "2021-11-05 00:00", "X", F, c("Algeria Division 1", "Algeria Division 2"))
 
-streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00", F)
+streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00","X", F)
 
 ```
 

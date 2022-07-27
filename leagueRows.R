@@ -37,15 +37,18 @@ getAllStreaks <- function(allMatches, index, leagueName, allStreaks = tibble(str
 }
 
 
-getStreakData <- function(sourceData, earliest = "2021-11-01 00:00", asList = T, filteredLeagues = NULL) {
+getStreakData <- function(sourceData, earliest = "2021-11-01 00:00", targetValue = "X", asList = F, filteredLeagues = NULL) {
   tempData <- sourceData %>%
-    mutate(success = case_when(
+    mutate(successType = case_when(
       forebet == "1" & homeGoals > awayGoals ~ "H",
       forebet == "X" & homeGoals == awayGoals ~ "X",
       forebet == "2" & homeGoals < awayGoals ~ "A",
       TRUE ~ "FAIL"
-    )) %>%
-    mutate(success = as.factor(success))
+    ))  %>% 
+    mutate(success = case_when(
+      successType == !!targetValue ~ "SUCCESS",
+      TRUE ~ "FAIL"
+    ))  
 
   leagues <- sourceData %>%
     distinct(countryAndLeague) %>%
