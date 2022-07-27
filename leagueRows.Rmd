@@ -15,7 +15,7 @@ install.packages("plotly")
 source("./leagueRows.R")
 streakDataFlat_algeria <- getStreakData(tidyvals, "2021-11-05 00:00", "X", F, c("Algeria Division 1", "Algeria Division 2"))
 
-streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00","X", F)
+streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00","j", F)
 
 ```
 
@@ -28,6 +28,20 @@ library(plotly)
 library(htmlwidgets)
 p <- streakDataFlat_algeria %>% ggplot(aes(x=parsedTime, y=streakType))  + geom_point(aes(size=streakLength, color=league), position=position_jitter()) 
 ggplotly(p)
+
+```
+
+Vain voittoputket:
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(htmlwidgets)
+p <- streakDataFlat_all %>% filter(streakType == "SUCCESS") %>% ggplot(aes(x=parsedTime, y=streakType))  + geom_point(aes(size=streakLength, color=league), position=position_jitter()) 
+htmlplot <- ggplotly(p)
+
+#saveWidget(htmlplot, file="streakplotexample.html")
+htmlplot
 
 ```
 
