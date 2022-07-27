@@ -40,9 +40,16 @@ library(pbapply)
 earliest <- parse_datetime("2021-11-01 00:00")
 inTimeFrame <- tempData %>% filter(parsedTime > earliest)
 
-getStreak <- function(allMatches, index, prevRes, streakLength) {
+getStreak <- function(allMatches, index, prevRow, streakLength) {
+  if(is.null(prevRow)){
+    prevRes <- NULL
+  }
+  else{
+    prevRes <- as.character(prevRow$success)
+  }
   if (index < 1) {
-    return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = NA))
+    thisRow <- allMatches[1, ]
+    return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = thisRow$parsedTime))
   }
   thisRow <- allMatches[index, ]
   currentRes <- as.character(thisRow$success)
@@ -52,9 +59,9 @@ getStreak <- function(allMatches, index, prevRes, streakLength) {
     sameResult <- currentRes == prevRes
   }
   if (noPrevResult | sameResult) {
-    return(getStreak(allMatches, index - 1, currentRes, streakLength + 1))
+    return(getStreak(allMatches, index - 1, thisRow, streakLength + 1))
   }
-  return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = thisRow$parsedTime))
+  return(list(streakLength = streakLength, streakType = prevRes, index = index, parsedTime = prevRow$parsedTime))
 }
 
 getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = NA, streakType = "",  parsedTime = NA)) {
@@ -65,6 +72,7 @@ getAllStreaks <- function(allMatches, index, allStreaks = tibble(streakLength = 
   }
   return(allStreaks[-1,])
 }
+
 
 
 streakResults <- 
