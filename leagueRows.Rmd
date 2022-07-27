@@ -76,7 +76,7 @@ streakResults <-
     return(NULL)
   }
   allStreaks <- getAllStreaks(allMatches, nrow(allMatches))
-  return(list(allMatches = allMatches %>% select(success), leagueName = l, streaks = allStreaks))
+  return(allStreaks)
 }), leagues)
 ```
 
