@@ -4,18 +4,20 @@
 Asenna mahdollisesti puuttuvat paketit:
 
 ```{r, include=F}
-install.packages("pbapply")
-install.packages("plotly")
+# install.packages("pbapply")
+# install.packages("plotly")
 ```
 
 ### Datan muokkaaminen
 
 
 ```{r}
+tidyvals <- readRDS("./tidyvals.RDS")
 source("./leagueRows.R")
 streakDataFlat_algeria <- getStreakData(tidyvals, "2021-11-05 00:00", "X", F, c("Algeria Division 1", "Algeria Division 2"))
 
 streakDataFlat_all <- getStreakData(tidyvals, "2021-11-05 00:00","X", F)
+streakDataFlat_algeria
 
 ```
 
@@ -44,4 +46,24 @@ htmlplot <- ggplotly(p)
 htmlplot
 
 ```
+
+### Lisää muiden tulosten perään
+
+```{r}
+
+addStreakDataToTidyRows <- function(filtered, streakData){
+  onlyLatestInLeague <- streakData %>% group_by(league) %>% top_n(1, parsedTime)  %>% rename(streakTime=parsedTime)
+  return(filtered %>% left_join(onlyLatestInLeague, by = c("countryAndLeague" = "league")))
+}
+
+
+addStreakDataToTidyRows(rahaSampHQnew, streakDataTESTit) %>% select(streakTime, streakType, streakLength)
+
+```
+
+
+
+
+
+
 
