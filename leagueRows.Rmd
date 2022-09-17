@@ -62,6 +62,22 @@ addStreakDataToTidyRows(rahaSampHQnew, streakDataTESTit) %>% select(streakTime, 
 ```
 
 
+### Tulosta nätimmin
+
+```{r}
+install.packages("kabelExtra")
+library(kable)
+
+tidyvals %>% 
+  mutate("Draw @" = "Draw @") %>%
+  mutate("¤¤" = "¤¤") %>%
+  mutate("vs" = "vs") %>%
+  select(KickOffTime, countryAndLeague, "¤¤" , homeTeam, vs, awayTeam, "Draw @", X)  %>% 
+  head(22) %>% 
+  kable(., format="markdown") 
+  %>% clipr::write_clip(.)
+
+```
 
 
 
